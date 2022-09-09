@@ -1,0 +1,1 @@
+This folder contains the graphical representations (if graphicalRepresentation is set to true and the data set is two-dimensional).

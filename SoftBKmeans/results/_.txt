@@ -1,0 +1,1 @@
+This folder contains the results. The assignment-files contain the assignment of the data points and the summary-files the running time of the algorithm.
