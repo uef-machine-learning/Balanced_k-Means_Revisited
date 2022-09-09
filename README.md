@@ -6,7 +6,7 @@ The program is written in C++ and is a Microsoft Visual Studio project, so, if t
 is used, the “SoftBKmeans.sln” file can directly be opened by Visual Studio. Otherwise, the 
 header and source files can be found in the folder “SoftBKmeans”.
 
-## The program takes some parameters, which are defined in the “main.cpp” file.
+## Parameters (defined in main.cpp)
 
 ### nameDataSet, dimension, size, numClusters
 Choosing the data set is mostly self-explanatory. The variables nameDataSet, dimension
