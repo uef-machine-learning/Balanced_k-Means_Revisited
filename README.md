@@ -2,6 +2,12 @@
 
 Original readme file: _readme.txt
 
+```
+Algorithm:
+R. de Maeyer and P. Fränti: "Balanced K-means revisited
+submitted (coming soon)
+```
+
 The program is written in C++ and is a Microsoft Visual Studio project, so, if this program 
 is used, the “SoftBKmeans.sln” file can directly be opened by Visual Studio. Otherwise, the 
 header and source files can be found in the folder “SoftBKmeans”.
