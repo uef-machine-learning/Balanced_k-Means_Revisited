@@ -19,7 +19,7 @@ public:
 	//the following function is only neessary for the graphical representation
 	double getValueInDim(int dim);
 
-private:
+// private:
 	int dimension;
 	double* values;
 

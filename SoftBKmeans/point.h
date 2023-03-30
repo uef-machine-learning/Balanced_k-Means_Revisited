@@ -2,6 +2,8 @@
 
 #include "cluster.h"
 
+#include <cmath>
+
 class Point {
 
 public:
@@ -26,7 +28,7 @@ public:
 	bool isNull() { return clusterId == -2; };
 	void setClusterId(int id) { clusterId = id; };
 
-private:
+// private:
 	Coordinate coord;
 	int clusterId;
 
