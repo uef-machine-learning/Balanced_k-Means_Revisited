@@ -4,6 +4,7 @@
 #define _pclose(a) pclose(a)
 #include <algorithm>
 #include <vector>
+#include <set>
 
 #include "point.h"
 #include "cluster.h"
@@ -17,12 +18,14 @@ public:
   enum class TerminationCriterion { MaxDiffClusterSizes, MinClusterSize, MaxSDCS, MinNormEntro };
 
   void initialize(int size, int dimension, std::string nameDataSet, int numClusters, int seed);
-  void initialize(std::vector< std::vector<double>> vec, int numClusters, int seed);
+  void initialize(std::vector<std::vector<double>> vec, int numClusters, int seed);
   void run(TerminationCriterion terminationCriterion, double terminationCriterionValue,
            bool stopWhenBalanced, double partlyRemainingFraction, double increasingPenaltyFactor,
-           bool useFunctionIter);
+           bool useFunctionIter, int switchPostp);
   void writeAssignments(std::fstream &assignments);
   void writeCentroids(std::fstream &f);
+  // void switchOpt(int cluAid, int cluBid, std::vector<int> &cluA, std::vector<int> &cluB);
+  int switchOpt(int cluAid, int cluBid, std::set<int> &cluA, std::set<int> &cluB);
 
   // the following function is necessary for the graphical representation of the results for
   // two-dimensional data sets

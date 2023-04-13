@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <math.h>
 #include <fstream>
+#include <cstdio>
 
 #include "kMeans.h"
 #include "gnuplot.h"
@@ -90,9 +91,11 @@ KMeans::~KMeans() {
   delete[] clusters;
 }
 
+bool sortbysec(const pair<int, double> &a, const pair<int, double> &b) { return (a.second < b.second); }
+
 void KMeans::run(TerminationCriterion terminationCriterion, double terminationCriterionValue,
                  bool stopWhenBalanced, double partlyRemainingFraction,
-                 double increasingPenaltyFactor, bool useFunctionIter) {
+                 double increasingPenaltyFactor, bool useFunctionIter, int switchPostp) {
   double penaltyNow = 0.0;
   double penaltyNext = std::numeric_limits<double>::max();
   bool balanceReq = false;
@@ -153,6 +156,164 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
     keepPenalty = false;
     numIter++;
   }
+
+  if (switchPostp > 0) {
+
+    vector<std::set<int>> cluvec;
+    for (int i = 0; i < numClusters; i++) {
+      // vector<int> v;
+      std::set<int> v;
+      cluvec.push_back(v);
+    }
+    for (int i = 0; i < size; i++) {
+      // cluvec[points[i].clusterId].push_back(i);
+      cluvec[points[i].clusterId].insert(i);
+    }
+
+    int cluAid = 1;
+    int cluBid = 2;
+
+    // vector<int> cluA = cluvec[1];
+    // vector<int> cluB = cluvec[2];
+
+    int switchCount = 1;
+    int iter=1;
+    while (switchCount > 0 && iter <= switchPostp ) {
+      switchCount = 0;
+      for (cluAid = 0; cluAid < numClusters - 1; cluAid++) {
+        for (cluBid = cluAid + 1; cluBid < numClusters; cluBid++) {
+          // switchOpt(cluAid, cluBid, cluvec[1], cluvec[2]);
+          switchCount += switchOpt(cluAid, cluBid, cluvec[cluAid], cluvec[cluBid]);
+          clusters[cluAid].setCentroidSeq();
+          clusters[cluBid].setCentroidSeq();
+        }
+      }
+      // Recalculate centroids based changed partitions
+      for (int i = 0; i < numClusters; i++) {
+        // cluster[i].centroid.values[0] = 0;
+        // clusters[i].setCentroidSeq();
+      }
+
+      printf("iter=%d switchCount=%d\n", iter, switchCount);
+      iter++;
+    }
+
+    // vector<std::pair<int, double>> cluAdist;
+    // vector<std::pair<int, double>> cluBdist;
+    // int negCountA = 0;
+    // for (int x : cluA) {
+    // double distB = clusters[cluBid].getSqrDistance(points[x].coord);
+    // double distA = clusters[cluAid].getSqrDistance(points[x].coord);
+    // double delta = distB - distA;
+    // cluAdist.push_back(std::make_pair(x, delta));
+    // if (delta < 0) {
+    // negCountA++;
+    // }
+    // // std::cout << "SQE:" << distA << " " << distB << " " << delta << "\n";
+    // }
+    // sort(cluAdist.begin(), cluAdist.end(), sortbysec);
+    // for (auto x : cluAdist) {
+    // std::cout << "id,dist " << x.first << " " << x.second << "\n";
+    // }
+
+    // int negCountB = 0;
+    // for (int x : cluB) {
+    // double distB = clusters[cluBid].getSqrDistance(points[x].coord);
+    // double distA = clusters[cluAid].getSqrDistance(points[x].coord);
+    // double delta = distA - distB;
+    // cluBdist.push_back(std::make_pair(x, delta));
+    // if (delta < 0) {
+    // negCountB++;
+    // }
+    // // std::cout << "SQE:" << distA << " " << distB << " " << delta << "\n";
+    // }
+    // sort(cluBdist.begin(), cluBdist.end(), sortbysec);
+    // printf("Asize:%d Bsize:%d negCountA:%d negCountB:%d\n", cluAdist.size(), cluBdist.size(),
+    // negCountA, negCountB);
+    // int minSize = std::min(cluBdist.size(), cluAdist.size());
+    // int switchCount = 0;
+    // for (int i = 0; i < minSize; i++) {
+    // double switchDelta = cluAdist[i].second + cluBdist[i].second;
+    // int id1 = cluAdist[i].first;
+    // int id2 = cluBdist[i].first;
+    // if (switchDelta < 0.0) {
+
+    // printf("make switch: %d %d %f\n", cluAdist[i].first, cluBdist[i].first, switchDelta);
+    // std::swap(points[id1].clusterId, points[id2].clusterId);
+    // switchCount++;
+    // }
+    // }
+    // printf("switchCount: %d\n", switchCount);
+  }
+
+  // cout << "negCount:" << negCountA << " " << negCountB << " ";
+}
+
+int KMeans::switchOpt(int cluAid, int cluBid, std::set<int> &cluA, std::set<int> &cluB) {
+  vector<std::pair<int, double>> cluAdist;
+  vector<std::pair<int, double>> cluBdist;
+  int negCountA = 0;
+  for (int x : cluA) {
+    double distB = clusters[cluBid].getSqrDistance(points[x].coord);
+    double distA = clusters[cluAid].getSqrDistance(points[x].coord);
+    double delta = distB - distA;
+    cluAdist.push_back(std::make_pair(x, delta));
+    if (delta < 0) {
+      negCountA++;
+    }
+    // std::cout << "SQE:" << distA << " " << distB << " " << delta << "\n";
+  }
+  sort(cluAdist.begin(), cluAdist.end(), sortbysec);
+  // for (auto x : cluAdist) {
+  // std::cout << "id,dist " << x.first << " " << x.second << "\n";
+  // }
+
+  int negCountB = 0;
+  for (int x : cluB) {
+    double distB = clusters[cluBid].getSqrDistance(points[x].coord);
+    double distA = clusters[cluAid].getSqrDistance(points[x].coord);
+    double delta = distA - distB;
+    cluBdist.push_back(std::make_pair(x, delta));
+    if (delta < 0) {
+      negCountB++;
+    }
+    // std::cout << "SQE:" << distA << " " << distB << " " << delta << "\n";
+  }
+  sort(cluBdist.begin(), cluBdist.end(), sortbysec);
+  // printf("Asize:%d Bsize:%d negCountA:%d negCountB:%d\n", cluAdist.size(), cluBdist.size(),
+  // negCountA, negCountB);
+  int minSize = std::min(cluBdist.size(), cluAdist.size());
+  int switchCount = 0;
+  for (int i = 0; i < minSize; i++) {
+    double switchDelta = cluAdist[i].second + cluBdist[i].second;
+    int id1 = cluAdist[i].first;
+    int id2 = cluBdist[i].first;
+    // printf("A=%d,B=%d,%f %f, switchDelta=%f\n",cluAid,cluBid,cluAdist[i].second,cluBdist[i].second,switchDelta);
+    if (switchDelta < 0.0) {
+
+      // cluA.erase(std::remove(cluA.begin(), cluA.end(), id1), cluA.end());
+      // cluB.erase(std::remove(cluB.begin(), cluB.end(), id2), cluB.end());
+      // cluA.push_back(id2);
+      // cluB.push_back(id1);
+
+      cluA.erase(id1);
+      cluB.erase(id2);
+      cluA.insert(id2);
+      cluB.insert(id1);
+
+      clusters[cluAid].removeCoordSeq(points[id1].coord);
+      clusters[cluAid].addCoordSeq(points[id2].coord);
+      clusters[cluBid].removeCoordSeq(points[id2].coord);
+      clusters[cluBid].addCoordSeq(points[id1].coord);
+
+      // printf("make switch: %d %d %f\n", cluAdist[i].first, cluBdist[i].first, switchDelta);
+      std::swap(points[id1].clusterId, points[id2].clusterId);
+      switchCount++;
+    }
+    else { break;}
+  }
+  // printf("switchCount: %d\n", switchCount);
+  return switchCount;
 }
 
 double KMeans::functionIter(int numIter) {
@@ -204,7 +365,7 @@ void KMeans::writeCentroids(std::fstream &f) {
   for (int i = 0; i < numClusters; i++) {
     Coordinate coord = clusters[i].getCentroid();
     // std::cout << "dim: " << coord.getDimension() << "\n";
-    for (int i_dim=0; i_dim < coord.getDimension(); i_dim++) {
+    for (int i_dim = 0; i_dim < coord.getDimension(); i_dim++) {
       f << coord.getValueInDim(i_dim);
       // std::cout << coord.getValueInDim(i_dim) << " ";
       if (i_dim < coord.getDimension() - 1) {
@@ -233,13 +394,12 @@ double KMeans::sumOfSquaredErrors() {
   return SSE;
 }
 
-
 double KMeans::meanSquaredError() {
   // double SSE = 0.0;
   // for (int i = 0; i < size; i++) {
-    // int clusterId = points[i].getClusterId();
-    // double sqrError = points[i].computeSqrDist(clusters[clusterId]);
-    // SSE += sqrError;
+  // int clusterId = points[i].getClusterId();
+  // double sqrError = points[i].computeSqrDist(clusters[clusterId]);
+  // SSE += sqrError;
   // }
   return sumOfSquaredErrors() / (double)(size);
 }

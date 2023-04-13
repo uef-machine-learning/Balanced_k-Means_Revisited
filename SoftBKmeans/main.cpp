@@ -60,13 +60,21 @@ int main(int argc, char *argv[]) {
   const char *progname = "bkmeans";
   int ok;
 
-  struct arg_int *a_numClu = arg_intn("k", "numclu", "<n>", 0, 1, "Number of clusters");
+  struct arg_int *a_numClu =
+      arg_intn("k", "numclu", "<n>", 0 /*mincount*/, 1 /*maxcount*/, "Number of clusters");
   struct arg_file *a_infn = arg_filen("i", NULL, "FILENAME", 1, 1, "Input filename");
   struct arg_file *a_partfn = arg_filen("o", NULL, "FILENAME", 1, 1, "Output partition filename");
   struct arg_file *a_cntfn = arg_filen("c", NULL, "FILENAME", 1, 1, "Output centroids filename");
+  struct arg_int *a_seed = arg_intn(NULL, "seed", "INT", 0, 1, "Random number seed");
+  struct arg_int *a_switch = arg_intn(NULL, "switch", "INT", 0, 1, "Delta switch postprocess");
+
+  struct arg_lit *a_viz =
+      arg_litn(NULL, "visualize", 0, 1, "Visualize clustering results of 2D set.");
+  struct arg_lit *a_help = arg_litn(NULL, "help", 0, 1, "Help");
+
   // struct arg_rem  *dest     = arg_rem ("DEST|DIRECTORY", NULL);
   struct arg_end *a_end = arg_end(20);
-  void *argtable[] = {a_infn, a_numClu, a_partfn, a_cntfn, a_end};
+  void *argtable[] = {a_infn, a_numClu, a_partfn, a_cntfn, a_seed, a_viz, a_switch, a_help, a_end};
   int exitcode = 0;
   int nerrors;
   int numClu = 64;
@@ -79,6 +87,15 @@ int main(int argc, char *argv[]) {
   }
 
   nerrors = arg_parse(argc, argv, argtable);
+
+  if (a_help->count > 0) {
+    printf("Usage: %s", progname);
+    arg_print_syntax(stdout, argtable, "\n");
+    // printf("Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY.\n\n");
+    arg_print_glossary(stdout, argtable, "  %-30s %s\n");
+    // exitcode=0;
+    return 0;
+  }
 
   if (nerrors > 0) {
     /* Display the error details contained in the arg_end struct.*/
@@ -96,6 +113,11 @@ int main(int argc, char *argv[]) {
 
   if (a_numClu->count > 0) {
     numClu = a_numClu->ival[0];
+  }
+
+  int switchPostp = 0;
+  if (a_switch->count > 0) {
+    switchPostp = a_switch->ival[0];
   }
 
   cout << "infn=" << a_infn->filename[0] << " partfn=" << a_partfn->filename[0] << " k=" << numClu
@@ -157,6 +179,11 @@ int main(int argc, char *argv[]) {
   } else {
     srand((int)time(NULL));
   }
+
+  if (a_seed->count > 0) {
+    srand(a_seed->ival[0]);
+  }
+
   int *seeds = new int[numRuns];
   for (int i = 0; i < numRuns; i++) {
     seeds[i] = rand();
@@ -169,7 +196,7 @@ int main(int argc, char *argv[]) {
     // solve the kMeans instance
     auto startTime = std::chrono::high_resolution_clock::now();
     kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
-               partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter);
+               partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter, switchPostp);
     auto endTime = std::chrono::high_resolution_clock::now();
     double time =
         std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
@@ -188,8 +215,13 @@ int main(int argc, char *argv[]) {
       kMeans.writeCentroids(centroidf);
       centroidf.close();
     }
-    cout << "Time=" << time << " SSE=" << kMeans.sumOfSquaredErrors() << " MSE=" << kMeans.meanSquaredError() << "\n";
-    
+    cout << "time=" << time << " SSE=" << kMeans.sumOfSquaredErrors()
+         << " MSE=" << kMeans.meanSquaredError() << "\n";
+
+    if (a_viz->count > 0) {
+      kMeans.showResultsConvexHull2("TODO", 0, time);
+    }
+
     // save times in summary file
     // summary.open(start + "_summary" + end, std::fstream::app);
     // summary << time << std::endl;
@@ -201,6 +233,7 @@ int main(int argc, char *argv[]) {
 
   return 0;
 
+#ifdef DISABLEd
   // prepare files for the results
   std::string start = "results/" + nameDataSet;
   std::string end = ".txt";
@@ -283,4 +316,5 @@ int main(int argc, char *argv[]) {
       }
     }
   }
+#endif
 }

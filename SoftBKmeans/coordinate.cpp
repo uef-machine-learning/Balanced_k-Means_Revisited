@@ -1,4 +1,5 @@
 #include "coordinate.h"
+#include <math.h>
 
 Coordinate::Coordinate(int dimension) {
 	this->dimension = dimension;
@@ -19,11 +20,15 @@ void Coordinate::deleteCoordinate()
 }
 
 double Coordinate::getSqrDistance(Coordinate coord) {
-	//returns squared distance bewteen the coordinates
+	//returns squared distance between the coordinates
 	double sum = 0.0;
 	for (int i = 0; i < dimension; i++) {
-		sum = sum + (values[i] - coord.values[i]) * (values[i] - coord.values[i]);
+		double diff=(values[i] - coord.values[i]);
+		sum = sum + diff*diff;
+		// sum = sum + (values[i] - coord.values[i]) * (values[i] - coord.values[i]);
 	}
+	sum = sqrt(sum);
+	sum = sum*sum;
 	return sum;
 }
 
