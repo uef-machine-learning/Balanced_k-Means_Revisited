@@ -21,6 +21,7 @@ Run example:
 infn=data/S1.txt partfn=labels.pa k=15
 iter=1 switchCount=14
 iter=2 switchCount=0
+time=0.0682364 SSE=1.08998e+13 MSE=2.17995e+09
 ```
 
 Command line parameters:
