@@ -44,6 +44,9 @@ The program is written in C++ and is a Microsoft Visual Studio project, so, if t
 is used, the “SoftBKmeans.sln” file can directly be opened by Visual Studio. Otherwise, the 
 header and source files can be found in the folder “SoftBKmeans”.
 
+The current version has not been tested on Visual Studio. Check the earlier release:
+https://github.com/uef-machine-learning/Balanced_k-Means_Revisited/releases/tag/alpha
+
 ## Parameters (defined in main.cpp)
 
 ### nameDataSet, dimension, size, numClusters
