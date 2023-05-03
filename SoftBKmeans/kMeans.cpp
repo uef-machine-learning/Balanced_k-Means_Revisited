@@ -91,11 +91,14 @@ KMeans::~KMeans() {
   delete[] clusters;
 }
 
-bool sortbysec(const pair<int, double> &a, const pair<int, double> &b) { return (a.second < b.second); }
+bool sortbysec(const pair<int, double> &a, const pair<int, double> &b) {
+  return (a.second < b.second);
+}
 
 void KMeans::run(TerminationCriterion terminationCriterion, double terminationCriterionValue,
                  bool stopWhenBalanced, double partlyRemainingFraction,
-                 double increasingPenaltyFactor, bool useFunctionIter, int switchPostp) {
+                 double increasingPenaltyFactor, bool useFunctionIter, int switchPostp,
+                 int _maxIter) {
   double penaltyNow = 0.0;
   double penaltyNext = std::numeric_limits<double>::max();
   bool balanceReq = false;
@@ -105,6 +108,7 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
   double MSE = std::numeric_limits<double>::max();
   double bestMSE = std::numeric_limits<double>::max();
   int numIter = 0;
+  int maxIter = _maxIter;
   // repeat the following steps until the stopping condition is met
   while (!terminate) {
     // assign points to clusters
@@ -144,6 +148,7 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
         keepPenalty = true;
       }
     }
+
     if (numIter != 0 && !keepPenalty) {
       // set penalty for next iteration
       if (useFunctionIter) {
@@ -153,9 +158,19 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
       }
       penaltyNext = std::numeric_limits<double>::max();
     }
+    // printf("i=%d SSE=%f\n",numIter,this->sumOfSquaredErrors());
     keepPenalty = false;
     numIter++;
+    if (numIter > maxIter) {
+      break;
+    }
   }
+
+  if (!(numIter >= maxIter)) {
+    restoreBestResults();
+  }
+
+  // this->saveAssignments();
 
   if (switchPostp > 0) {
 
@@ -166,84 +181,32 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
       cluvec.push_back(v);
     }
     for (int i = 0; i < size; i++) {
-      // cluvec[points[i].clusterId].push_back(i);
       cluvec[points[i].clusterId].insert(i);
     }
 
     int cluAid = 1;
     int cluBid = 2;
-
-    // vector<int> cluA = cluvec[1];
-    // vector<int> cluB = cluvec[2];
-
     int switchCount = 1;
-    int iter=1;
-    while (switchCount > 0 && iter <= switchPostp ) {
+    int iter = 1;
+    while (switchCount > 0 && iter <= switchPostp) {
       switchCount = 0;
       for (cluAid = 0; cluAid < numClusters - 1; cluAid++) {
         for (cluBid = cluAid + 1; cluBid < numClusters; cluBid++) {
-          // switchOpt(cluAid, cluBid, cluvec[1], cluvec[2]);
           switchCount += switchOpt(cluAid, cluBid, cluvec[cluAid], cluvec[cluBid]);
           clusters[cluAid].setCentroidSeq();
           clusters[cluBid].setCentroidSeq();
         }
       }
       // Recalculate centroids based changed partitions
-      for (int i = 0; i < numClusters; i++) {
-        // cluster[i].centroid.values[0] = 0;
-        // clusters[i].setCentroidSeq();
-      }
+      // for (int i = 0; i < numClusters; i++) {
+      // cluster[i].centroid.values[0] = 0;
+      // clusters[i].setCentroidSeq();
+      // }
 
       printf("iter=%d switchCount=%d\n", iter, switchCount);
       iter++;
     }
-
-    // vector<std::pair<int, double>> cluAdist;
-    // vector<std::pair<int, double>> cluBdist;
-    // int negCountA = 0;
-    // for (int x : cluA) {
-    // double distB = clusters[cluBid].getSqrDistance(points[x].coord);
-    // double distA = clusters[cluAid].getSqrDistance(points[x].coord);
-    // double delta = distB - distA;
-    // cluAdist.push_back(std::make_pair(x, delta));
-    // if (delta < 0) {
-    // negCountA++;
-    // }
-    // // std::cout << "SQE:" << distA << " " << distB << " " << delta << "\n";
-    // }
-    // sort(cluAdist.begin(), cluAdist.end(), sortbysec);
-    // for (auto x : cluAdist) {
-    // std::cout << "id,dist " << x.first << " " << x.second << "\n";
-    // }
-
-    // int negCountB = 0;
-    // for (int x : cluB) {
-    // double distB = clusters[cluBid].getSqrDistance(points[x].coord);
-    // double distA = clusters[cluAid].getSqrDistance(points[x].coord);
-    // double delta = distA - distB;
-    // cluBdist.push_back(std::make_pair(x, delta));
-    // if (delta < 0) {
-    // negCountB++;
-    // }
-    // // std::cout << "SQE:" << distA << " " << distB << " " << delta << "\n";
-    // }
-    // sort(cluBdist.begin(), cluBdist.end(), sortbysec);
-    // printf("Asize:%d Bsize:%d negCountA:%d negCountB:%d\n", cluAdist.size(), cluBdist.size(),
-    // negCountA, negCountB);
-    // int minSize = std::min(cluBdist.size(), cluAdist.size());
-    // int switchCount = 0;
-    // for (int i = 0; i < minSize; i++) {
-    // double switchDelta = cluAdist[i].second + cluBdist[i].second;
-    // int id1 = cluAdist[i].first;
-    // int id2 = cluBdist[i].first;
-    // if (switchDelta < 0.0) {
-
-    // printf("make switch: %d %d %f\n", cluAdist[i].first, cluBdist[i].first, switchDelta);
-    // std::swap(points[id1].clusterId, points[id2].clusterId);
-    // switchCount++;
-    // }
-    // }
-    // printf("switchCount: %d\n", switchCount);
+    this->saveAssignments();
   }
 
   // cout << "negCount:" << negCountA << " " << negCountB << " ";
@@ -288,7 +251,8 @@ int KMeans::switchOpt(int cluAid, int cluBid, std::set<int> &cluA, std::set<int>
     double switchDelta = cluAdist[i].second + cluBdist[i].second;
     int id1 = cluAdist[i].first;
     int id2 = cluBdist[i].first;
-    // printf("A=%d,B=%d,%f %f, switchDelta=%f\n",cluAid,cluBid,cluAdist[i].second,cluBdist[i].second,switchDelta);
+    // printf("A=%d,B=%d,%f %f,
+    // switchDelta=%f\n",cluAid,cluBid,cluAdist[i].second,cluBdist[i].second,switchDelta);
     if (switchDelta < 0.0) {
 
       // cluA.erase(std::remove(cluA.begin(), cluA.end(), id1), cluA.end());
@@ -309,8 +273,9 @@ int KMeans::switchOpt(int cluAid, int cluBid, std::set<int> &cluA, std::set<int>
       // printf("make switch: %d %d %f\n", cluAdist[i].first, cluBdist[i].first, switchDelta);
       std::swap(points[id1].clusterId, points[id2].clusterId);
       switchCount++;
+    } else {
+      break;
     }
-    else { break;}
   }
   // printf("switchCount: %d\n", switchCount);
   return switchCount;
@@ -394,15 +359,7 @@ double KMeans::sumOfSquaredErrors() {
   return SSE;
 }
 
-double KMeans::meanSquaredError() {
-  // double SSE = 0.0;
-  // for (int i = 0; i < size; i++) {
-  // int clusterId = points[i].getClusterId();
-  // double sqrError = points[i].computeSqrDist(clusters[clusterId]);
-  // SSE += sqrError;
-  // }
-  return sumOfSquaredErrors() / (double)(size);
-}
+double KMeans::meanSquaredError() { return sumOfSquaredErrors() / (double)(size); }
 
 bool KMeans::checkMaxDiffClusterSizes(int maxDiffClusterSizes) {
   int diffClusterSizes = computeDiffClusterSizes();
@@ -466,8 +423,28 @@ double KMeans::computeNormEntro() {
   return normEntro;
 }
 
+void KMeans::restoreBestResults() {
+  // restore the best assignment and update number of points in each cluster
+  for (int i = 0; i < size; i++) {
+    int oldClusterId = points[i].getClusterId();
+    int newClusterId = bestAssignment[i];
+    if (newClusterId != oldClusterId) {
+      Coordinate coord = points[i].getCoord();
+      clusters[oldClusterId].removePointSeq();
+      clusters[oldClusterId].removeCoordSeq(coord);
+      clusters[newClusterId].addPointSeq();
+      clusters[newClusterId].addCoordSeq(coord);
+      points[i].setClusterId(newClusterId);
+    }
+  }
+  for (int j = 0; j < numClusters; j++) {
+    clusters[j].setCentroidSeq();
+  }
+}
+
 void KMeans::showResultsConvexHull(string nameDataSet, int run, double timeInSec) {
   // restore the best assignment and update number of points in each cluster
+  // TODO:
   for (int i = 0; i < size; i++) {
     int oldClusterId = points[i].getClusterId();
     int newClusterId = bestAssignment[i];
@@ -639,6 +616,7 @@ void KMeans::showResultsConvexHull(string nameDataSet, int run, double timeInSec
   plot("unset border");
   plot("unset xtics");
   plot("unset ytics");
+ 
 
   // set styles for points on convex hull
   plot("set style line 3 lt 1 lc rgb '#000000' lw 1.0");
@@ -655,7 +633,7 @@ void KMeans::showResultsConvexHull(string nameDataSet, int run, double timeInSec
                                                      // apply commands
   plot(commandxRange);
   plot(commandyRange);
-  plot(commandTitle);
+  // plot(commandTitle);
   plot(command);
   // memory
   for (int i = 0; i < numClusters; i++) {
@@ -858,7 +836,7 @@ void KMeans::showResultsConvexHull2(string nameDataSet, int run, double timeInSe
                                                        // apply commands
   plot(commandxRange);
   plot(commandyRange);
-  plot(commandTitle);
+  // plot(commandTitle);
   plot(command);
   // memory
   for (int i = 0; i < numClusters; i++) {

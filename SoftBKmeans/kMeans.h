@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <set>
+#include <string>
 
 #include "point.h"
 #include "cluster.h"
@@ -21,7 +22,7 @@ public:
   void initialize(std::vector<std::vector<double>> vec, int numClusters, int seed);
   void run(TerminationCriterion terminationCriterion, double terminationCriterionValue,
            bool stopWhenBalanced, double partlyRemainingFraction, double increasingPenaltyFactor,
-           bool useFunctionIter, int switchPostp);
+           bool useFunctionIter, int switchPostp, int _maxIter);
   void writeAssignments(std::fstream &assignments);
   void writeCentroids(std::fstream &f);
   // void switchOpt(int cluAid, int cluBid, std::vector<int> &cluA, std::vector<int> &cluB);
@@ -32,6 +33,7 @@ public:
   void showResultsConvexHull(std::string nameDataSet, int run, double timeInSec);
   void showResultsConvexHull2(std::string nameDataSet, int run, double timeInSec);
 
+  void restoreBestResults();
   // private:
   int dimension;
   int size;

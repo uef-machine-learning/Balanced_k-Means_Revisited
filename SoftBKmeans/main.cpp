@@ -65,8 +65,11 @@ int main(int argc, char *argv[]) {
   struct arg_file *a_infn = arg_filen("i", NULL, "FILENAME", 1, 1, "Input filename");
   struct arg_file *a_partfn = arg_filen("o", NULL, "FILENAME", 1, 1, "Output partition filename");
   struct arg_file *a_cntfn = arg_filen("c", NULL, "FILENAME", 1, 1, "Output centroids filename");
+  struct arg_str *a_vizprefix =
+      arg_str0(NULL, "vizpref", "PREFIX", "Prefix to use for visualization filename");
   struct arg_int *a_seed = arg_intn(NULL, "seed", "INT", 0, 1, "Random number seed");
   struct arg_int *a_switch = arg_intn(NULL, "switch", "INT", 0, 1, "Delta switch postprocess");
+  struct arg_int *a_iter = arg_intn(NULL, "iter", "INT", 0, 1, "Limit maximum iterations");
 
   struct arg_lit *a_viz =
       arg_litn(NULL, "visualize", 0, 1, "Visualize clustering results of 2D set.");
@@ -74,7 +77,8 @@ int main(int argc, char *argv[]) {
 
   // struct arg_rem  *dest     = arg_rem ("DEST|DIRECTORY", NULL);
   struct arg_end *a_end = arg_end(20);
-  void *argtable[] = {a_infn, a_numClu, a_partfn, a_cntfn, a_seed, a_viz, a_switch, a_help, a_end};
+  void *argtable[] = {a_infn, a_numClu, a_partfn, a_cntfn,     a_seed,
+                      a_viz,  a_switch, a_help,   a_vizprefix,a_iter, a_end};
   int exitcode = 0;
   int nerrors;
   int numClu = 64;
@@ -172,12 +176,18 @@ int main(int argc, char *argv[]) {
   int numRuns = 100;
   bool reproducible = true;
   bool graphicalRepresentation = true;
+  
+  int maxIter = 100000;
 
   // set random seeds for the runs
   if (reproducible) {
     srand(7843); // any other int can be chosen
   } else {
     srand((int)time(NULL));
+  }
+
+  if (a_iter->count > 0) {
+    maxIter = a_iter->ival[0];
   }
 
   if (a_seed->count > 0) {
@@ -196,7 +206,7 @@ int main(int argc, char *argv[]) {
     // solve the kMeans instance
     auto startTime = std::chrono::high_resolution_clock::now();
     kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
-               partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter, switchPostp);
+               partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter, switchPostp, maxIter);
     auto endTime = std::chrono::high_resolution_clock::now();
     double time =
         std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
@@ -220,6 +230,10 @@ int main(int argc, char *argv[]) {
 
     if (a_viz->count > 0) {
       kMeans.showResultsConvexHull2("TODO", 0, time);
+    }
+
+    if (a_vizprefix->count > 0) {
+      kMeans.showResultsConvexHull2(a_vizprefix->sval[0], 0, time);
     }
 
     // save times in summary file
