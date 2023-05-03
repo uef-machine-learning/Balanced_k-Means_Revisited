@@ -1,13 +1,44 @@
-# Balanced_k-Means_Revisited
+# Balanced k-Means Revisited
 
 ```
-Original readme file: _readme.txt
-
 Algorithm:
 R. de Maeyer and P. Fränti: "Balanced K-means revisited"
 submitted (coming soon)
 ```
 
+
+# Compile and use on Linux
+
+Compile:
+```
+cd SoftBKmeans
+make
+```
+
+Run example:
+```
+./bkmeans -k 15 --seed 7059488 -i data/S1.txt -o labels.pa -c centroids.txt --switch 30
+infn=data/S1.txt partfn=labels.pa k=15
+iter=1 switchCount=14
+iter=2 switchCount=0
+```
+
+Command line parameters:
+```
+Usage: bkmeans -i FILENAME [-k <n>] -o FILENAME -c FILENAME [--seed=INT] [--visualize] [--switch=INT] [--help] [--vizpref=PREFIX] [--iter=INT]
+  -i FILENAME                    Input filename
+  -k, --numclu=<n>               Number of clusters
+  -o FILENAME                    Output partition filename
+  -c FILENAME                    Output centroids filename
+  --seed=INT                     Random number seed
+  --visualize                    Visualize clustering results of 2D set.
+  --switch=INT                   Delta switch postprocess
+  --help                         Help
+  --vizpref=PREFIX               Prefix to use for visualization filename
+  --iter=INT                     Limit maximum iterations
+```
+
+# Usage on Microsoft Visual Studio
 The program is written in C++ and is a Microsoft Visual Studio project, so, if this program 
 is used, the “SoftBKmeans.sln” file can directly be opened by Visual Studio. Otherwise, the 
 header and source files can be found in the folder “SoftBKmeans”.
