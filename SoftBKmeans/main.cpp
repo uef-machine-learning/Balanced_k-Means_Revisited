@@ -203,6 +203,7 @@ int main(int argc, char *argv[]) {
     int run = 0;
     KMeans kMeans;
     kMeans.initialize(vec, numClu, seeds[run]);
+    kMeans.printCentroids();
     // solve the kMeans instance
     auto startTime = std::chrono::high_resolution_clock::now();
     kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
@@ -228,6 +229,7 @@ int main(int argc, char *argv[]) {
     cout << "time=" << time << " SSE=" << kMeans.sumOfSquaredErrors()
          << " MSE=" << kMeans.meanSquaredError() << "\n";
 
+    kMeans.printCentroids();
     if (a_viz->count > 0) {
       kMeans.showResultsConvexHull2("TODO", 0, time);
     }
@@ -235,6 +237,7 @@ int main(int argc, char *argv[]) {
     if (a_vizprefix->count > 0) {
       kMeans.showResultsConvexHull2(a_vizprefix->sval[0], 0, time);
     }
+    kMeans.printCentroids();
 
     // save times in summary file
     // summary.open(start + "_summary" + end, std::fstream::app);

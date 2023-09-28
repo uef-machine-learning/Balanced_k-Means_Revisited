@@ -116,6 +116,11 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
       points[i].assignToCluster(clusters, numClusters, numIter, penaltyNow, &penaltyNext,
                                 partlyRemainingFraction);
     }
+
+    if (maxIter == 0) {
+      this->saveAssignments();
+      return;
+    }
     // check if balance requirements are satisfied or if data set is already completely balanced
     // choose between the following balance criterions:
     switch (terminationCriterion) {
@@ -143,7 +148,6 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
         this->saveAssignments();
         keepPenalty = true;
       } else if (stopWhenBalanced || balanced) {
-        // else if (stopWhenBalanced || balanced) {
         terminate = true;
         keepPenalty = true;
       }
@@ -209,6 +213,7 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
     this->saveAssignments();
   }
 
+  this->saveAssignments();
   // cout << "negCount:" << negCountA << " " << negCountB << " ";
 }
 
@@ -319,10 +324,43 @@ void KMeans::initializeCenters() {
 }
 
 void KMeans::writeAssignments(std::fstream &f) {
-  // write the assignments in the file f
-  for (int i = 0; i < size; i++) {
-    f << bestAssignment[i] << "\n";
+
+  std::cout << "writeAssignments, start\n";
+
+  // Sort labels based on x value
+  vector<std::pair<double, int>> vmap;
+  vector<int> rmap(numClusters, 0);
+  for (int i = 0; i < numClusters; i++) {
+    Coordinate coord = clusters[i].getCentroid();
+    double xval = coord.getValueInDim(0);
+    vmap.push_back(std::make_pair(xval, i));
   }
+  sort(vmap.begin(), vmap.end()); // Sort by first
+  for (int i = 0; i < numClusters; i++) {
+    std::cout << vmap[i].first << " " << vmap[i].second << "\n";
+    rmap[vmap[i].second] = i;
+  }
+
+  // write the assignments to the file f
+  for (int i = 0; i < size; i++) {
+    f << rmap[bestAssignment[i]] << "\n";
+  }
+  std::cout << "writeAssignments, end\n";
+}
+
+void KMeans::printCentroids() {
+  std::cout << "CENTROIDS\n";
+  for (int i = 0; i < numClusters; i++) {
+    Coordinate coord = clusters[i].getCentroid();
+    // std::cout << "dim: " << coord.getDimension() << "\n";
+    for (int i_dim = 0; i_dim < coord.getDimension(); i_dim++) {
+      std::cout << coord.getValueInDim(i_dim) << " ";
+      if (i_dim < coord.getDimension() - 1) {
+      }
+    }
+    std::cout << "\n";
+  }
+  std::cout << "=========\n";
 }
 
 void KMeans::writeCentroids(std::fstream &f) {
@@ -616,7 +654,6 @@ void KMeans::showResultsConvexHull(string nameDataSet, int run, double timeInSec
   plot("unset border");
   plot("unset xtics");
   plot("unset ytics");
- 
 
   // set styles for points on convex hull
   plot("set style line 3 lt 1 lc rgb '#000000' lw 1.0");
@@ -662,8 +699,9 @@ void KMeans::showResultsConvexHull2(string nameDataSet, int run, double timeInSe
   // }
   // break kMeans.cpp:457
   // p(
+  std::cout << "showres\n";
   for (int j = 0; j < numClusters; j++) {
-    clusters[j].setCentroidSeq();
+    // clusters[j].setCentroidSeq();
   }
   // first sort points regarding their clusters
   Point **orderedPoints = new Point *[numClusters];
@@ -824,7 +862,10 @@ void KMeans::showResultsConvexHull2(string nameDataSet, int run, double timeInSe
   // set styles for points on convex hull
   plot("set style line 3 lt 1 lc rgb '#000000' lw 1.0");
   // set styles for points
-  plot("set style line 2 lc rgb '#000000' pt 7 ps 0.6");
+
+  // plot("set style line 2 lc rgb '#000000' pt 7 ps 0.6");
+  plot("set style line 2 lc rgb '#000000' pt 7 ps 0.3");
+
   // set styles for centroids
   plot("set style line 1 lc rgb '#3333ff' pt 7 ps 2"); // blue
                                                        // set styles for centroids with too few
