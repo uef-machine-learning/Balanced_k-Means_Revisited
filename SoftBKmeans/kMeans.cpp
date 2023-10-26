@@ -213,6 +213,8 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
     this->saveAssignments();
   }
 
+  printf("iterations=%d\n", numIter);
+
   this->saveAssignments();
   // cout << "negCount:" << negCountA << " " << negCountB << " ";
 }
@@ -325,8 +327,6 @@ void KMeans::initializeCenters() {
 
 void KMeans::writeAssignments(std::fstream &f) {
 
-  std::cout << "writeAssignments, start\n";
-
   // Sort labels based on x value
   vector<std::pair<double, int>> vmap;
   vector<int> rmap(numClusters, 0);
@@ -335,9 +335,9 @@ void KMeans::writeAssignments(std::fstream &f) {
     double xval = coord.getValueInDim(0);
     vmap.push_back(std::make_pair(xval, i));
   }
-  sort(vmap.begin(), vmap.end()); // Sort by first
+  sort(vmap.begin(), vmap.end()); // Sort by first value of pair
   for (int i = 0; i < numClusters; i++) {
-    std::cout << vmap[i].first << " " << vmap[i].second << "\n";
+    // std::cout << vmap[i].first << " " << vmap[i].second << "\n";
     rmap[vmap[i].second] = i;
   }
 
@@ -345,7 +345,6 @@ void KMeans::writeAssignments(std::fstream &f) {
   for (int i = 0; i < size; i++) {
     f << rmap[bestAssignment[i]] << "\n";
   }
-  std::cout << "writeAssignments, end\n";
 }
 
 void KMeans::printCentroids() {

@@ -68,20 +68,28 @@ int main(int argc, char *argv[]) {
   struct arg_str *a_vizprefix =
       arg_str0(NULL, "vizpref", "PREFIX", "Prefix to use for visualization filename");
   struct arg_int *a_seed = arg_intn(NULL, "seed", "INT", 0, 1, "Random number seed");
-  struct arg_int *a_switch = arg_intn(NULL, "switch", "INT", 0, 1, "Delta switch postprocess");
+  struct arg_int *a_switch = arg_intn(NULL, "switch", "INT", 0, 1, "Delta switch postprocess iterations (default: 10)");
   struct arg_int *a_iter = arg_intn(NULL, "iter", "INT", 0, 1, "Limit maximum iterations");
+  struct arg_dbl *a_termcv = arg_dbln(NULL, "maxdiff", "DBL", 0, 1, "Max difference between partition sizes (default: 1)");
 
   struct arg_lit *a_viz =
       arg_litn(NULL, "visualize", 0, 1, "Visualize clustering results of 2D set.");
   struct arg_lit *a_help = arg_litn(NULL, "help", 0, 1, "Help");
 
-  // struct arg_rem  *dest     = arg_rem ("DEST|DIRECTORY", NULL);
   struct arg_end *a_end = arg_end(20);
-  void *argtable[] = {a_infn, a_numClu, a_partfn, a_cntfn,     a_seed,
-                      a_viz,  a_switch, a_help,   a_vizprefix,a_iter, a_end};
+  void *argtable[] = {a_infn,   a_numClu, a_partfn,    a_cntfn, a_seed, a_viz,
+                      a_switch, a_help,   a_vizprefix, a_iter, a_termcv, a_end};
   int exitcode = 0;
   int nerrors;
   int numClu = 64;
+
+  // value == 1 for hard balance, value > 1 for soft balance 
+  double terminationCriterionValue = 1.0;
+  bool stopWhenBalanced = false;
+  double partlyRemainingFraction = 0.15; // 0 < partlyremainingFraction < 1
+  double increasingPenaltyFactor = 1.01; // increasingPenaltyFactor >= 1
+  bool useFunctionIter = true;
+  bool reproducible = false;
 
   if (arg_nullcheck(argtable) != 0) {
     /* NULL entries were detected, some allocations must have failed */
@@ -118,65 +126,32 @@ int main(int argc, char *argv[]) {
   if (a_numClu->count > 0) {
     numClu = a_numClu->ival[0];
   }
+  
+  
+  if (a_termcv->count > 0) {
+    terminationCriterionValue = a_termcv->dval[0];
+  }
 
-  int switchPostp = 0;
+  int switchPostp = 10;
   if (a_switch->count > 0) {
     switchPostp = a_switch->ival[0];
   }
 
+    KMeans::TerminationCriterion terminationCriterion =
+        KMeans::TerminationCriterion::MaxDiffClusterSizes;
+    // the value that should be reached by the termination criterion
+    // a balanced clustering corresponds to maximum difference in cluster sizes as termination
+    // // criterion and terminationCriterion = 1, balanced is not 0!
+
   cout << "infn=" << a_infn->filename[0] << " partfn=" << a_partfn->filename[0] << " k=" << numClu
        << "\n";
-  // return 0;
 
-  // choose data set
-  // std::string nameDataSet = "S2";
-  // int dimension = 2;
-  // int size = 5000;
-  // int numClusters = 15;
-
-  // std::string nameDataSet = "santa5000";
-  // int dimension = 2;
-  // int size = 5000;
-  // int numClusters = 20;
   int dimension, size, numClusters;
 
-  // std::string nameDataSet = "santa1.4M";
-  // std::string infn = "data/santa1.4M.txt";
-
-  std::string nameDataSet = "unbalance";
-  std::string infn = "data/unbalance.txt";
-  numClusters = 8;
-
-  // int dimension = 2;
-  // int size = 1437195;
-  // auto vec = load2DVec<double>(infn);
   auto vec = load2DVec<double>(a_infn->filename[0]);
   dimension = vec[0].size();
   size = vec.size();
 
-  // For soft balance:
-  // setting parameters
-  // the termination criterion to be used, already implemented are MaxDiffClusterSize,
-  // MinClusterSize, MaxSDCS and MinNormEntro
-  KMeans::TerminationCriterion terminationCriterion =
-      KMeans::TerminationCriterion::MaxDiffClusterSizes;
-  // the value that should be reached by the termination criterion
-  // a balanced clustering corresponds to maximum difference in cluster sizes as termination
-  // criterion and terminationCriterion = 1, balanced is not 0!
-  double terminationCriterionValue = 50.0;
-
-  // For hard balance:
-  terminationCriterion = KMeans::TerminationCriterion::MaxDiffClusterSizes;
-  terminationCriterionValue = 1.0;
-
-  bool stopWhenBalanced = false;
-  double partlyRemainingFraction = 0.15; // 0 < partlyremainingFraction < 1
-  double increasingPenaltyFactor = 1.01; // increasingPenaltyFactor >= 1
-  bool useFunctionIter = true;
-  int numRuns = 100;
-  bool reproducible = true;
-  bool graphicalRepresentation = true;
-  
   int maxIter = 100000;
 
   // set random seeds for the runs
@@ -194,144 +169,44 @@ int main(int argc, char *argv[]) {
     srand(a_seed->ival[0]);
   }
 
-  int *seeds = new int[numRuns];
-  for (int i = 0; i < numRuns; i++) {
-    seeds[i] = rand();
+  printf("Parameters: terminationCriterionValue=%f partlyRemainingFraction=%f increasingPenaltyFactor=%f maxIter=%d\n",terminationCriterionValue, partlyRemainingFraction, increasingPenaltyFactor, maxIter);
+  
+  int run = 0;
+  KMeans kMeans;
+  kMeans.initialize(vec, numClu, rand());
+  // solve the kMeans instance
+  auto startTime = std::chrono::high_resolution_clock::now();
+  kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
+             partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter, switchPostp,
+             maxIter);
+  auto endTime = std::chrono::high_resolution_clock::now();
+  double time =
+      std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
+  // save assignments in file
+  // std::string filename =  std::to_string(run) + end;
+
+  if (a_partfn->count > 0) {
+    std::fstream partf;
+    partf.open(a_partfn->filename[0], std::ios::out);
+    kMeans.writeAssignments(partf);
+    partf.close();
+  }
+  if (a_cntfn->count > 0) {
+    std::fstream centroidf;
+    centroidf.open(a_cntfn->filename[0], std::ios::out);
+    kMeans.writeCentroids(centroidf);
+    centroidf.close();
+  }
+  cout << "time=" << time << " SSE=" << kMeans.sumOfSquaredErrors()
+       << " MSE=" << kMeans.meanSquaredError() << "\n";
+
+  if (a_viz->count > 0) {
+    kMeans.showResultsConvexHull2("TODO", 0, time);
   }
 
-  if (1) {
-    int run = 0;
-    KMeans kMeans;
-    kMeans.initialize(vec, numClu, seeds[run]);
-    kMeans.printCentroids();
-    // solve the kMeans instance
-    auto startTime = std::chrono::high_resolution_clock::now();
-    kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
-               partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter, switchPostp, maxIter);
-    auto endTime = std::chrono::high_resolution_clock::now();
-    double time =
-        std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
-    // save assignments in file
-    // std::string filename =  std::to_string(run) + end;
-
-    if (a_partfn->count > 0) {
-      std::fstream partf;
-      partf.open(a_partfn->filename[0], std::ios::out);
-      kMeans.writeAssignments(partf);
-      partf.close();
-    }
-    if (a_cntfn->count > 0) {
-      std::fstream centroidf;
-      centroidf.open(a_cntfn->filename[0], std::ios::out);
-      kMeans.writeCentroids(centroidf);
-      centroidf.close();
-    }
-    cout << "time=" << time << " SSE=" << kMeans.sumOfSquaredErrors()
-         << " MSE=" << kMeans.meanSquaredError() << "\n";
-
-    kMeans.printCentroids();
-    if (a_viz->count > 0) {
-      kMeans.showResultsConvexHull2("TODO", 0, time);
-    }
-
-    if (a_vizprefix->count > 0) {
-      kMeans.showResultsConvexHull2(a_vizprefix->sval[0], 0, time);
-    }
-    kMeans.printCentroids();
-
-    // save times in summary file
-    // summary.open(start + "_summary" + end, std::fstream::app);
-    // summary << time << std::endl;
-    // summary.close();
-    // if (graphicalRepresentation && dimension == 2) {
-    // kMeans.showResultsConvexHull(nameDataSet, run, time);
-    // }
+  if (a_vizprefix->count > 0) {
+    kMeans.showResultsConvexHull2(a_vizprefix->sval[0], 0, time);
   }
 
   return 0;
-
-#ifdef DISABLEd
-  // prepare files for the results
-  std::string start = "results/" + nameDataSet;
-  std::string end = ".txt";
-  std::fstream summary;
-  summary.open(start + "_summary" + end, std::ios::out);
-  summary.close();
-
-  std::cout.setf(std::ios::unitbuf);
-  if (1) {
-    // string labelfn = "/home/sami/Drive/uef/bkmeans/regularized-k-means/labels5k.csv";
-    // string labelfn = "/home/sami/Drive/uef/bkmeans/regularized-k-means/labels14M_10.csv";
-    // string labelfn = "/home/sami/Drive/uef/bkmeans/regularized-k-means/labels14M_3.csv";
-    string labelfn = "/home/sjs/Drive/uef/bkmeans/regularized-k-means/unbalance_labels.txt.csv";
-
-    vector<int> vect = readIntVec(labelfn);
-    // for (auto i : vect) {
-    // std::cout << i << ' ';
-    // }
-    // cout << "\n";
-    // return 0;
-
-    KMeans kMeans;
-    kMeans.initialize(size, dimension, nameDataSet, numClusters, 23232323);
-    // kMeans.points[0].coord.values
-    auto startTime = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < size; i++) {
-
-      // kMeans.points[i].clusterId =
-      int cluid = floor(numClusters * (static_cast<float>(i) / static_cast<float>(size)));
-      if (cluid >= numClusters) {
-        cluid = numClusters - 1;
-      }
-      cluid = vect[i];
-      // cout << "cluid:" << cluid << endl;
-
-      Coordinate coord = kMeans.points[i].getCoord();
-      kMeans.clusters[cluid].addPointSeq();
-      kMeans.clusters[cluid].addCoordSeq(coord);
-      kMeans.points[i].setClusterId(cluid);
-    }
-
-    auto endTime = std::chrono::high_resolution_clock::now();
-    double time =
-        std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
-    kMeans.showResultsConvexHull2(nameDataSet, 0, time);
-
-    // kMeans.points[0].coord =
-  }
-
-  else {
-
-    // run kMeans numRuns times
-    for (int run = 99; run < numRuns; run++) {
-
-      std::cout << "run number" << run << "\n";
-
-      // create a kMeans instance
-      KMeans kMeans;
-      // kMeans.initialize(size, dimension, nameDataSet, numClusters, seeds[run]);
-      kMeans.initialize(vec, numClusters, seeds[run]);
-      // solve the kMeans instance
-      auto startTime = std::chrono::high_resolution_clock::now();
-      kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
-                 partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter);
-      auto endTime = std::chrono::high_resolution_clock::now();
-      double time =
-          std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
-      // save assignments in file
-      std::string filename = start + "_assignments_" + std::to_string(run) + end;
-      std::fstream assignments;
-      assignments.open(filename, std::ios::out);
-      kMeans.writeAssignments(assignments);
-      assignments.close();
-      // save times in summary file
-      summary.open(start + "_summary" + end, std::fstream::app);
-      summary << time << std::endl;
-      summary.close();
-      if (graphicalRepresentation && dimension == 2) {
-        kMeans.showResultsConvexHull(nameDataSet, run, time);
-      }
-    }
-  }
-#endif
 }

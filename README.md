@@ -15,14 +15,16 @@ cd SoftBKmeans
 make
 ```
 
-Run example:
+Run example (hard balance):
 ```
 ./bkmeans -k 15 --seed 7059488 -i data/S1.txt -o labels.pa -c centroids.txt --switch 30
-infn=data/S1.txt partfn=labels.pa k=15
-iter=1 switchCount=14
-iter=2 switchCount=0
-time=0.0682364 SSE=1.08998e+13 MSE=2.17995e+09
 ```
+
+Run example (soft balance), limiting maximum difference between sizes of any two partitions to 50:
+```
+./bkmeans -k 15 --seed 7059488 -i data/S1.txt -o labels.pa -c centroids.txt --switch 30 --maxdiff 50
+```
+
 
 Command line parameters:
 ```
