@@ -28,20 +28,23 @@ Run example (soft balance), limiting maximum difference between sizes of any two
 
 Command line parameters:
 ```
-Usage: bkmeans -i FILENAME [-k <n>] -o FILENAME -c FILENAME [--seed=INT] [--visualize] [--switch=INT] [--help] [--vizpref=PREFIX] [--iter=INT]
+Usage: bkmeans -i FILENAME [-k <n>] -o FILENAME -c FILENAME [--seed=INT] [--visualize] [--switch=INT] [--help] [--vizpref=PREFIX] [--iter=INT] [--maxdiff=DBL]
   -i FILENAME                    Input filename
   -k, --numclu=<n>               Number of clusters
   -o FILENAME                    Output partition filename
   -c FILENAME                    Output centroids filename
   --seed=INT                     Random number seed
   --visualize                    Visualize clustering results of 2D set.
-  --switch=INT                   Delta switch postprocess
+  --switch=INT                   Delta switch postprocess iterations (default: 10)
   --help                         Help
   --vizpref=PREFIX               Prefix to use for visualization filename
   --iter=INT                     Limit maximum iterations
+  --maxdiff=DBL                  Max difference between partition sizes (default: 1)
 ```
 
-# Usage on Microsoft Visual Studio
+# Instructions for older version 
+See source code for the [older version](https://github.com/uef-machine-learning/Balanced_k-Means_Revisited/tree/230277f5bf3821206af39892210af39314024606)
+
 The program is written in C++ and is a Microsoft Visual Studio project, so, if this program 
 is used, the “SoftBKmeans.sln” file can directly be opened by Visual Studio. Otherwise, the 
 header and source files can be found in the folder “SoftBKmeans”.
