@@ -1,10 +1,10 @@
 # Balanced k-Means Revisited
 
-```
 Algorithm:
-R. de Maeyer and P. Fränti: "Balanced K-means revisited"
-submitted (coming soon)
-```
+
+R. de Maeyer, S. Sieranoja and P. Fränti, Balanced k-means revisited, Applied Computing and Intelligence, 2023, Volume 3, Issue 2: 145-179. doi: 10.3934/aci.2023008
+
+https://aimspress.com/article/doi/10.3934/aci.2023008
 
 
 # Compile and use on Linux
