@@ -25,6 +25,14 @@ Run example (soft balance), limiting maximum difference between sizes of any two
 ./bkmeans -k 15 --seed 7059488 -i data/S1.txt -o labels.pa -c centroids.txt --switch 30 --maxdiff 50
 ```
 
+# Python interface
+
+```
+git clone https://github.com/uef-machine-learning/Balanced_k-Means_Revisited
+cd Balanced_k-Means_Revisited/SoftBKmeans/
+pip install .
+./py_example.py
+```
 
 Command line parameters:
 ```

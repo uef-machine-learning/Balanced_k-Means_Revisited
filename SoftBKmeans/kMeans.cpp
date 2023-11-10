@@ -180,7 +180,6 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
 
     vector<std::set<int>> cluvec;
     for (int i = 0; i < numClusters; i++) {
-      // vector<int> v;
       std::set<int> v;
       cluvec.push_back(v);
     }
@@ -201,13 +200,7 @@ void KMeans::run(TerminationCriterion terminationCriterion, double terminationCr
           clusters[cluBid].setCentroidSeq();
         }
       }
-      // Recalculate centroids based changed partitions
-      // for (int i = 0; i < numClusters; i++) {
-      // cluster[i].centroid.values[0] = 0;
-      // clusters[i].setCentroidSeq();
-      // }
-
-      printf("iter=%d switchCount=%d\n", iter, switchCount);
+      // printf("iter=%d switchCount=%d\n", iter, switchCount);
       iter++;
     }
     this->saveAssignments();
@@ -261,11 +254,6 @@ int KMeans::switchOpt(int cluAid, int cluBid, std::set<int> &cluA, std::set<int>
     // printf("A=%d,B=%d,%f %f,
     // switchDelta=%f\n",cluAid,cluBid,cluAdist[i].second,cluBdist[i].second,switchDelta);
     if (switchDelta < 0.0) {
-
-      // cluA.erase(std::remove(cluA.begin(), cluA.end(), id1), cluA.end());
-      // cluB.erase(std::remove(cluB.begin(), cluB.end(), id2), cluB.end());
-      // cluA.push_back(id2);
-      // cluB.push_back(id1);
 
       cluA.erase(id1);
       cluB.erase(id2);
@@ -346,6 +334,32 @@ void KMeans::writeAssignments(std::fstream &f) {
     f << rmap[bestAssignment[i]] << "\n";
   }
 }
+
+int* KMeans::getLabels() {
+
+  // Sort labels based on x value
+  vector<std::pair<double, int>> vmap;
+  // vector<int> labels;
+  vector<int> rmap(numClusters, 0);
+  int* labels = new int[size];
+  for (int i = 0; i < numClusters; i++) {
+    Coordinate coord = clusters[i].getCentroid();
+    double xval = coord.getValueInDim(0);
+    vmap.push_back(std::make_pair(xval, i));
+  }
+  sort(vmap.begin(), vmap.end()); // Sort by first value of pair
+  for (int i = 0; i < numClusters; i++) {
+    // std::cout << vmap[i].first << " " << vmap[i].second << "\n";
+    rmap[vmap[i].second] = i;
+  }
+
+  for (int i = 0; i < size; i++) {
+    // labels.push_back(rmap[bestAssignment[i]]);
+    labels[i] = rmap[bestAssignment[i]];
+  }
+  return labels;
+}
+
 
 void KMeans::printCentroids() {
   std::cout << "CENTROIDS\n";

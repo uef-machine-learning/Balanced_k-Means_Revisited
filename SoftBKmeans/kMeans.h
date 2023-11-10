@@ -25,6 +25,8 @@ public:
            bool useFunctionIter, int switchPostp, int _maxIter);
   void writeAssignments(std::fstream &assignments);
   void writeCentroids(std::fstream &f);
+  int* getLabels();
+
   void printCentroids();
   // void switchOpt(int cluAid, int cluBid, std::vector<int> &cluA, std::vector<int> &cluB);
   int switchOpt(int cluAid, int cluBid, std::set<int> &cluA, std::set<int> &cluB);
