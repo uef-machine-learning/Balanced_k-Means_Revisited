@@ -9,7 +9,7 @@ __version__ = "0.1"
 # cargs = ['-O3',  '-std=c++11', '-fopenmp', '-fpermissive', '-D_PYTHON_LIB','-Wunused-variable','-Wno-unused-but-set-variable', '-Wno-unused-result', '-Wno-unused-variable']
 #For debug:
 # cargs = ['-O1', '-g', '-std=c++11', '-fopenmp', '-fpermissive',  '-Wall', '-D_PYTHON_LIB']
-cargs = []
+cargs = ['-fpermissive']
 
 with open('../README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
