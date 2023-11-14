@@ -17,7 +17,7 @@ make
 
 Run example (hard balance):
 ```
-./bkmeans -k 15 --seed 7059488 -i data/S1.txt -o labels.pa -c centroids.txt --switch 30
+./bkmeans -k 15 --seed 7059488 -i datasets/s1.txt -o labels.pa -c centroids.txt --switch 30
 ```
 
 Run example (soft balance), limiting maximum difference between sizes of any two partitions to 50:

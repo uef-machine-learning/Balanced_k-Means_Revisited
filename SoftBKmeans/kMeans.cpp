@@ -9,7 +9,7 @@
 #include "kMeans.h"
 #include "gnuplot.h"
 
-void KMeans::initialize(vector<vector<double>> vec, int numClusters, int seed) {
+void KMeans::initialize(vector<vector<double>> vec, int numClusters) {
 
   int size = vec.size();
   int dimension = vec[0].size();
@@ -35,42 +35,6 @@ void KMeans::initialize(vector<vector<double>> vec, int numClusters, int seed) {
     Coordinate coord = Coordinate(values, dimension);
     points[i] = Point(coord);
   }
-  // check if more clusters than points
-  if (numClusters > size) {
-    std::cout << "More clusters than points!";
-    return;
-  }
-  // initialize clusters
-  initializeCenters();
-}
-
-void KMeans::initialize(int size, int dimension, std::string nameDataSet, int numClusters,
-                        int seed) {
-  this->dimension = dimension;
-  this->size = size;
-  this->numClusters = numClusters;
-  points = new Point[size];
-  bestAssignment = new int[size];
-  // read points from file
-  std::fstream f;
-  // f.open("data\\" + nameDataSet + ".txt", std::ios::in);
-  string fname = "data/" + nameDataSet + ".txt";
-  f.open(fname, std::ios::in);
-  if (f.fail()) {
-    cout << "File open failed:" << fname << "\n";
-    exit(0);
-  }
-  for (int i = 0; i < size; i++) {
-    double *values = new double[dimension];
-    for (int j = 0; j < dimension; j++) {
-      double value;
-      f >> value;
-      values[j] = value;
-    }
-    Coordinate coord = Coordinate(values, dimension);
-    points[i] = Point(coord);
-  }
-  f.close();
   // check if more clusters than points
   if (numClusters > size) {
     std::cout << "More clusters than points!";

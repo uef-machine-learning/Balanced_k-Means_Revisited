@@ -59,6 +59,7 @@ PyObject *py_balkmeans(PyListObject *py_v, int o_num_clusters, float o_partly_re
   PyObject *x = PyList_GetItem((PyObject *)py_v, 0);
   int dim = PyList_Size(x);
   printf("size=%d dim=%d\n", lsize, dim);
+  srand(o_seed);
 
   vector<vector<double>> vec;
 
@@ -83,7 +84,7 @@ PyObject *py_balkmeans(PyListObject *py_v, int o_num_clusters, float o_partly_re
   std::cout << "Finnished loading data\n";
 
   KMeans kMeans;
-  kMeans.initialize(vec, o_num_clusters, o_seed);
+  kMeans.initialize(vec, o_num_clusters);
   KMeans::TerminationCriterion terminationCriterion =
       KMeans::TerminationCriterion::MaxDiffClusterSizes;
 
@@ -130,7 +131,7 @@ static PyObject *balkmeans_py(PyObject *self, PyObject *args, PyObject *kwargs) 
   int o_iter = 100000;
   int o_maxdiff = 1; // Allow only a maximum size difference of 1 between largest and smallest clusters
   int o_verbose = 0;
-  int o_seed = 0;
+  int o_seed = time(NULL);
   int switchPostp = 10;
   int o_postprocess_iterations = 50;
 
@@ -152,6 +153,7 @@ static PyObject *balkmeans_py(PyObject *self, PyObject *args, PyObject *kwargs) 
                                    &o_seed, &o_postprocess_iterations)) {
     return NULL;
   }
+
 
   ret = py_balkmeans(py_v, o_num_clusters, o_partly_remaining_factor, o_increasing_penalty_factor,
                      o_iter, o_maxdiff, o_verbose, o_seed, switchPostp, o_postprocess_iterations);

@@ -18,8 +18,7 @@ public:
 
   enum class TerminationCriterion { MaxDiffClusterSizes, MinClusterSize, MaxSDCS, MinNormEntro };
 
-  void initialize(int size, int dimension, std::string nameDataSet, int numClusters, int seed);
-  void initialize(std::vector<std::vector<double>> vec, int numClusters, int seed);
+  void initialize(std::vector<std::vector<double>> vec, int numClusters);
   void run(TerminationCriterion terminationCriterion, double terminationCriterionValue,
            bool stopWhenBalanced, double partlyRemainingFraction, double increasingPenaltyFactor,
            bool useFunctionIter, int switchPostp, int _maxIter);

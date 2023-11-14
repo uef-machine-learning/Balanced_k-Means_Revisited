@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
   
   int run = 0;
   KMeans kMeans;
-  kMeans.initialize(vec, numClu, rand());
+  kMeans.initialize(vec, numClu);
   // solve the kMeans instance
   auto startTime = std::chrono::high_resolution_clock::now();
   kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
