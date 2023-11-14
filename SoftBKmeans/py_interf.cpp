@@ -39,11 +39,6 @@ using std::vector;
 #include <math.h>
 #include <stdio.h>
 
-// #define v(x0, x1)                                                                                  \
-  // (*(npy_float64 *)((PyArray_DATA(py_v) + (x0)*PyArray_STRIDES(py_v)[0] +                          \
-                     // (x1)*PyArray_STRIDES(py_v)[1])))
-// #define v_shape(i) (py_v->dimensions[(i)])
-
 PyObject *array_to_py(int *arr, int N) {
   // Convert c array to python format
   // printf("array_to_py size=%d\n", N);
@@ -54,7 +49,9 @@ PyObject *array_to_py(int *arr, int N) {
   return pyarr;
 }
 
-PyObject *py_balkmeans(PyListObject *py_v, int num_clusters, int repeats, int seed) {
+PyObject *py_balkmeans(PyListObject *py_v, int o_num_clusters, float o_partly_remaining_factor,
+                       float o_increasing_penalty_factor, int o_iter, float o_maxdiff,
+                       int o_verbose, int o_seed, int switchPostp, int o_postprocess_iterations) {
 
   PyObject *py_labels;
 
@@ -86,26 +83,18 @@ PyObject *py_balkmeans(PyListObject *py_v, int num_clusters, int repeats, int se
   std::cout << "Finnished loading data\n";
 
   KMeans kMeans;
-  // kMeans.initialize(vec, numClu, rand());
-  kMeans.initialize(vec, 15, 232323);
+  kMeans.initialize(vec, o_num_clusters, o_seed);
   KMeans::TerminationCriterion terminationCriterion =
       KMeans::TerminationCriterion::MaxDiffClusterSizes;
 
-  int maxIter = 100000;
-  double terminationCriterionValue = 1.0;
   bool stopWhenBalanced = false;
-  double partlyRemainingFraction = 0.15; // 0 < partlyremainingFraction < 1
-  double increasingPenaltyFactor = 1.01; // increasingPenaltyFactor >= 1
   bool useFunctionIter = true;
-  int switchPostp = 10;
-  bool reproducible = false;
 
   // auto startTime = std::chrono::high_resolution_clock::now();
-  kMeans.run(terminationCriterion, terminationCriterionValue, stopWhenBalanced,
-             partlyRemainingFraction, increasingPenaltyFactor, useFunctionIter, switchPostp,
-             maxIter);
-  int* labels = kMeans.getLabels();
-  py_labels = array_to_py(labels,kMeans.size);
+  kMeans.run(terminationCriterion, o_maxdiff, stopWhenBalanced, o_partly_remaining_factor,
+             o_increasing_penalty_factor, useFunctionIter, o_postprocess_iterations, o_iter);
+  int *labels = kMeans.getLabels();
+  py_labels = array_to_py(labels, kMeans.size);
 
   std::cout << "Finnished running algorithm\n";
 
@@ -135,29 +124,37 @@ PyMODINIT_FUNC PyInit_balkmeans(void) {
 
 static PyObject *balkmeans_py(PyObject *self, PyObject *args, PyObject *kwargs) {
   PyListObject *py_v;
-  int num_clusters = 10;
-  char *type = NULL;
-
-  int o_repeats = 100;
   int o_num_clusters = 20;
-  char *o_graph_type;
-  char *o_costf;
-  char *o_scale;
+  float o_partly_remaining_factor = 0.15;
+  float o_increasing_penalty_factor = 1.01;
+  int o_iter = 100000;
+  int o_maxdiff = 1; // Allow only a maximum size difference of 1 between largest and smallest clusters
   int o_verbose = 0;
   int o_seed = 0;
+  int switchPostp = 10;
+  int o_postprocess_iterations = 50;
 
   PyObject *ret;
-  static char *kwlist[] = {"v",     "num_clusters", "repeats", "costf",
-                           "scale", "verbose",      "seed",    NULL};
+  static char *kwlist[] = {"v",
+                           "num_clusters",
+                           "partly_remaining_factor",
+                           "increasing_penalty_factor",
+                           "iter",
+                           "maxdiff",
+                           "verbose",
+                           "seed",
+                           "postprocess_iterations",
+                           NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!i|issii", kwlist, &PyList_Type, &py_v,
-                                   &o_num_clusters, &o_repeats, &o_costf, &o_scale, &o_verbose,
-                                   &o_seed)) {
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!i|ffiiiii", kwlist, &PyList_Type, &py_v,
+                                   &o_num_clusters, &o_partly_remaining_factor,
+                                   &o_increasing_penalty_factor, &o_iter, &o_maxdiff, &o_verbose,
+                                   &o_seed, &o_postprocess_iterations)) {
     return NULL;
   }
 
-
-  ret = py_balkmeans(py_v, NULL, NULL, NULL);
+  ret = py_balkmeans(py_v, o_num_clusters, o_partly_remaining_factor, o_increasing_penalty_factor,
+                     o_iter, o_maxdiff, o_verbose, o_seed, switchPostp, o_postprocess_iterations);
 
   return ret;
 }
