@@ -6,7 +6,6 @@ from setuptools import setup, Extension
 
 __version__ = "0.1"
 
-# cargs = ['-O3',  '-std=c++11', '-fopenmp', '-fpermissive', '-D_PYTHON_LIB','-Wunused-variable','-Wno-unused-but-set-variable', '-Wno-unused-result', '-Wno-unused-variable']
 #For debug:
 # cargs = ['-O1', '-g', '-std=c++11', '-fopenmp', '-fpermissive',  '-Wall', '-D_PYTHON_LIB']
 cargs = ['-fpermissive']
@@ -25,7 +24,7 @@ setup(
     requires=['rapidfuzz'],
     python_requires='>=3',
     provides=['balkmeans'],
-    description='Fast agglomerative clustering using TSP-graph',
+    description='Balanced k-Means',
     long_description=long_description,
     long_description_content_type='text/markdown',
     classifiers=[
