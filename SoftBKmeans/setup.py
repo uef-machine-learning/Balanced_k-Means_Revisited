@@ -21,7 +21,6 @@ setup(
     name='balkmeans',
     version='1.0',
     setup_requires=['wheel'],
-    requires=['rapidfuzz'],
     python_requires='>=3',
     provides=['balkmeans'],
     description='Balanced k-Means',
